@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Municipio {
+  id         Int       @id @default(autoincrement())
+  nome       String    @unique
+  codigoIbge String?   @unique
+  regiao     String    // ABC | GRANDE_SP | CAMPINAS | OUTRA
+  ativo      Boolean   @default(true)
+  feriados   Feriado[]
+}
+
+model Feriado {
+  id           Int        @id @default(autoincrement())
+  escopo       String     // NACIONAL | ESTADUAL | MUNICIPAL
+  tipo         String     @default("FERIADO") // FERIADO | PONTO_FACULTATIVO
+  nome         String
+  tipoData     String     // FIXA | MOVEL
+  mes          Int?       // 1-12 (quando FIXA)
+  dia          Int?       // 1-31 (quando FIXA)
+  offsetPascoa Int?       // dias em relação à Páscoa (quando MOVEL). Ex.: Sexta-feira Santa = -2
+  vigenciaDe   Int?       // ano inicial (opcional)
+  vigenciaAte  Int?       // ano final (opcional)
+  verificado   Boolean    @default(false)
+  municipioId  Int?       // vazio para NACIONAL/ESTADUAL
+  municipio    Municipio? @relation(fields: [municipioId], references: [id])
+  fontes       Fonte[]
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+
+  @@index([municipioId, mes, dia])
+}
+
+model Fonte {
+  id           Int      @id @default(autoincrement())
+  feriadoId    Int
+  feriado      Feriado  @relation(fields: [feriadoId], references: [id], onDelete: Cascade)
+  tipo         String   // LEI | SITE_PREFEITURA | DIARIO_OFICIAL | OUTRO
+  referencia   String?  // ex.: número da lei
+  url          String?
+  consultadoEm DateTime
+}

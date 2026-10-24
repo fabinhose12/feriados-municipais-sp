@@ -1,69 +1,265 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { connection } from "next/server";
+import { prisma } from "../lib/prisma";
+import { feriadosDoAno, type FeriadoDoAno } from "../lib/feriados";
+import {
+  DIAS_SEMANA,
+  MESES,
+  hojeEmSaoPaulo,
+  isoDoDia,
+  mesAnterior,
+  mesSeguinte,
+  montarSemanas,
+} from "../lib/calendario";
 
-export default function Home() {
+const styles = {
+  pagina: "cal-pagina",
+  filtro: "cal-filtro",
+  cidades: "cal-cidades",
+  aviso: "cal-aviso",
+  navegacao: "cal-navegacao",
+  grade: "cal-grade",
+  cabecalho: "cal-cabecalho",
+  dia: "cal-dia",
+  vazio: "cal-vazio",
+  hoje: "cal-hoje",
+  numero: "cal-numero",
+  itens: "cal-itens",
+  item: "cal-item",
+  nacional: "cal-nacional",
+  estadual: "cal-estadual",
+  municipal: "cal-municipal",
+  facultativo: "cal-facultativo",
+  naoVerificado: "cal-naoVerificado",
+  legenda: "cal-legenda",
+  lista: "cal-lista",
+};
+
+type Params = { ano?: string; mes?: string; cidade?: string | string[] };
+
+const REGIOES: Record<string, string> = {
+  ABC: "Grande ABC",
+  GRANDE_SP: "Grande São Paulo",
+  CAMPINAS: "Região de Campinas",
+  OUTRA: "Outras cidades",
+};
+
+function lerNumero(valor: string | undefined, padrao: number, min: number, max: number) {
+  const n = Number(valor);
+  return Number.isInteger(n) && n >= min && n <= max ? n : padrao;
+}
+
+function classeDoItem(f: FeriadoDoAno) {
+  if (f.tipo === "PONTO_FACULTATIVO") return styles.facultativo;
+  if (f.escopo === "NACIONAL") return styles.nacional;
+  if (f.escopo === "ESTADUAL") return styles.estadual;
+  return styles.municipal;
+}
+
+async function Calendario({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
+  await connection(); // usa data/hora e banco: renderizar a cada acesso
+  const params = await searchParams;
+  const hoje = hojeEmSaoPaulo();
+  const ano = lerNumero(params.ano, hoje.ano, 2000, 2100);
+  const mes = lerNumero(params.mes, hoje.mes, 1, 12);
+
+  const cidadesParam = Array.isArray(params.cidade)
+    ? params.cidade
+    : params.cidade
+      ? [params.cidade]
+      : [];
+
+  const municipios = await prisma.municipio.findMany({
+    where: { ativo: true },
+    orderBy: { nome: "asc" },
+  });
+  const nomePorId = new Map(municipios.map((m) => [m.id, m.nome]));
+  const selecionados = cidadesParam
+    .map(Number)
+    .filter((id) => nomePorId.has(id));
+
+  const feriadosAno = await feriadosDoAno(ano, selecionados);
+  const prefixo = `${ano}-${String(mes).padStart(2, "0")}`;
+  const doMes = feriadosAno.filter((f) => f.data.startsWith(prefixo));
+
+  const porDia = new Map<string, FeriadoDoAno[]>();
+  for (const f of doMes) porDia.set(f.data, [...(porDia.get(f.data) ?? []), f]);
+
+  // Cidades selecionadas sem nenhum feriado municipal cadastrado no ano
+  const comMunicipal = new Set(
+    feriadosAno.filter((f) => f.escopo === "MUNICIPAL").map((f) => f.municipioId),
+  );
+  const semDados = selecionados
+    .filter((id) => !comMunicipal.has(id))
+    .map((id) => nomePorId.get(id));
+
+  const montarLink = (a: number, m: number) => {
+    const q = new URLSearchParams({ ano: String(a), mes: String(m) });
+    selecionados.forEach((id) => q.append("cidade", String(id)));
+    return `/?${q.toString()}`;
+  };
+  const anterior = mesAnterior(ano, mes);
+  const seguinte = mesSeguinte(ano, mes);
+
+  const grupos = Object.keys(REGIOES)
+    .map((chave) => ({
+      chave,
+      titulo: REGIOES[chave],
+      cidades: municipios.filter((m) => m.regiao === chave),
+    }))
+    .filter((g) => g.cidades.length > 0);
+
+  const rotulo = (f: FeriadoDoAno) =>
+    f.escopo === "MUNICIPAL" && f.municipioId
+      ? `${nomePorId.get(f.municipioId)}: ${f.nome}`
+      : f.nome;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className={styles.pagina}>
+      <h1>Feriados municipais — SP</h1>
+
+      <form method="get" className={styles.filtro}>
+        <input type="hidden" name="ano" value={ano} />
+        <input type="hidden" name="mes" value={mes} />
+        <details open={selecionados.length === 0}>
+          <summary>
+            Cidades ({selecionados.length} selecionada{selecionados.length === 1 ? "" : "s"})
+          </summary>
+          {grupos.map((g) => (
+            <fieldset key={g.chave}>
+              <legend>{g.titulo}</legend>
+              <div className={styles.cidades}>
+                {g.cidades.map((c) => (
+                  <label key={c.id}>
+                    <input
+                      type="checkbox"
+                      name="cidade"
+                      value={c.id}
+                      defaultChecked={selecionados.includes(c.id)}
+                    />{" "}
+                    {c.nome}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </details>
+        <button type="submit">Aplicar</button>
+      </form>
+
+      {selecionados.length === 0 && (
+        <p className={styles.aviso}>
+          Selecione as cidades para ver os feriados municipais. Por enquanto,
+          só os feriados nacionais e estaduais aparecem.
+        </p>
+      )}
+      {semDados.length > 0 && (
+        <p className={styles.aviso}>
+          Ainda não há feriados municipais cadastrados em {ano} para:{" "}
+          {semDados.join(", ")}. Isso não significa que não existam.
+        </p>
+      )}
+
+      <nav className={styles.navegacao}>
+        <Link href={montarLink(anterior.ano, anterior.mes)}>← Anterior</Link>
+        <h2>
+          {MESES[mes - 1]} de {ano}
+        </h2>
+        <Link href={montarLink(seguinte.ano, seguinte.mes)}>Próximo →</Link>
+      </nav>
+
+      <div className={styles.grade}>
+        {DIAS_SEMANA.map((d) => (
+          <div key={d} className={styles.cabecalho}>
+            {d}
+          </div>
+        ))}
+        {montarSemanas(ano, mes)
+          .flat()
+          .map((dia, i) => {
+            if (dia === null) return <div key={i} className={styles.vazio} />;
+            const iso = isoDoDia(ano, mes, dia);
+            const itens = porDia.get(iso) ?? [];
+            return (
+              <div
+                key={i}
+                className={`${styles.dia} ${iso === hoje.iso ? styles.hoje : ""}`}
+              >
+                <span className={styles.numero}>{dia}</span>
+                <div className={styles.itens}>
+                  {itens.map((f, k) => (
+                    <span
+                      key={k}
+                      title={rotulo(f)}
+                      className={`${styles.item} ${classeDoItem(f)} ${
+                        f.escopo === "MUNICIPAL" && !f.verificado ? styles.naoVerificado : ""
+                      }`}
+                    >
+                      {rotulo(f)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+
+      <ul className={styles.legenda}>
+        <li><span className={`${styles.item} ${styles.nacional}`}>Nacional</span></li>
+        <li><span className={`${styles.item} ${styles.estadual}`}>Estadual</span></li>
+        <li><span className={`${styles.item} ${styles.municipal}`}>Municipal</span></li>
+        <li><span className={`${styles.item} ${styles.facultativo}`}>Ponto facultativo</span></li>
+        <li><span className={`${styles.item} ${styles.municipal} ${styles.naoVerificado}`}>Municipal não verificado</span></li>
+      </ul>
+
+      <h3>Feriados do mês</h3>
+      {doMes.length === 0 ? (
+        <p>Nenhum feriado cadastrado neste mês para a seleção atual.</p>
+      ) : (
+        <ul className={styles.lista}>
+          {doMes.map((f, k) => {
+            const [a, m, d] = f.data.split("-").map(Number);
+            const semana = new Date(Date.UTC(a, m - 1, d)).toLocaleDateString("pt-BR", {
+              weekday: "short",
+              timeZone: "UTC",
+            });
+            return (
+              <li key={k}>
+                <strong>
+                  {String(d).padStart(2, "0")}/{String(m).padStart(2, "0")}
+                </strong>{" "}
+                ({semana}) — {f.nome}
+                {f.escopo === "MUNICIPAL" && f.municipioId ? ` · ${nomePorId.get(f.municipioId)}` : ""}
+                {f.tipo === "PONTO_FACULTATIVO" ? " · ponto facultativo" : ""}
+                {f.escopo === "MUNICIPAL" && !f.verificado ? " · não verificado" : ""}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </main>
+  );
+}
+
+export default function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <main className={styles.pagina}>
+          <p>Carregando calendário…</p>
+        </main>
+      }
+    >
+      <Calendario searchParams={searchParams} />
+    </Suspense>
   );
 }
