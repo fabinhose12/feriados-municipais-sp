@@ -1,4 +1,3 @@
-// Validação do formulário de contribuição (sem dependências do banco).
 
 export function normalizar(texto: string): string {
   return texto
@@ -46,7 +45,6 @@ export type Resultado =
 const limpar = (v: string | undefined) => (v ?? "").replace(/\s+/g, " ").trim();
 
 export function validarEnvio(b: Record<string, string>): Resultado {
-  // Cidade: uma existente (id) ou uma nova (texto)
   const id = Number(b.municipioId);
   let municipioId: number | null = null;
   let novaCidade: string | null = null;
@@ -82,7 +80,6 @@ export function validarEnvio(b: Record<string, string>): Resultado {
     dia = Number(b.dia);
     if (!Number.isInteger(mes) || !Number.isInteger(dia) || mes < 1 || mes > 12 || dia < 1 || dia > 31)
       return { ok: false, erro: "Informe um dia e um mês válidos." };
-    // 2024 é bissexto: aceita 29/02 e rejeita datas como 31/04
     if (new Date(Date.UTC(2024, mes - 1, dia)).getUTCMonth() !== mes - 1)
       return { ok: false, erro: "Essa data não existe (confira o dia e o mês)." };
   }

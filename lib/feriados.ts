@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { calcularPascoa, paraISO, somarDias } from "./pascoa";
 
-// Formato mínimo que a função precisa (compatível com o model Feriado do Prisma)
+
 export type FeriadoBase = {
   tipoData: string; // FIXA | MOVEL
   mes: number | null;
@@ -11,7 +11,7 @@ export type FeriadoBase = {
   vigenciaAte: number | null;
 };
 
-// Retorna "YYYY-MM-DD" ou null se o feriado não vale naquele ano / está mal cadastrado.
+
 export function dataDoFeriado(f: FeriadoBase, ano: number): string | null {
   if (f.vigenciaDe != null && ano < f.vigenciaDe) return null;
   if (f.vigenciaAte != null && ano > f.vigenciaAte) return null;
@@ -40,8 +40,6 @@ export type FeriadoDoAno = {
   verificado: boolean;
 };
 
-// Feriados de um ano: nacionais + estaduais + municipais das cidades pedidas.
-// Só entram os já APROVADOS (contribuições pendentes não aparecem no calendário).
 export async function feriadosDoAno(
   ano: number,
   municipioIds: number[] = []

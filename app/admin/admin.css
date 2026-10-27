@@ -1,0 +1,18 @@
+/* ---------- Moderação (/admin) ---------- */
+.adm-topo { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.adm-topo-links { display: flex; align-items: center; gap: 1rem; }
+.adm-topo-links button,
+.adm-acoes button {
+  padding: 0.4rem 0.9rem; border-radius: 6px; border: 1px solid var(--borda);
+  cursor: pointer; font-weight: 600; background: transparent; color: inherit;
+}
+.adm-cartao { border: 1px solid var(--borda); border-radius: 8px; padding: 0.75rem 1rem; margin: 0.75rem 0; display: grid; gap: 0.35rem; }
+.adm-titulo { font-weight: 700; }
+.adm-meta { font-size: 0.85rem; opacity: 0.85; }
+.adm-badge { display: inline-block; font-size: 0.7rem; padding: 1px 8px; border-radius: 999px; background: var(--mun-bg); color: var(--mun-fg); margin-left: 0.5rem; }
+.adm-fonte { font-size: 0.9rem; }
+.adm-fonte a { color: var(--destaque); word-break: break-all; }
+.adm-acoes { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.adm-acoes .adm-aprovar { background: #16a34a; color: #fff; border-color: #16a34a; }
+.adm-acoes .adm-rejeitar { border-color: #dc2626; color: #dc2626; }
+.adm-vazio { opacity: 0.8; }
