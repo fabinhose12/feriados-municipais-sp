@@ -62,7 +62,7 @@ async function Calendario({
 }: {
   searchParams: Promise<Params>;
 }) {
-  await connection(); // usa data/hora e banco: renderizar a cada acesso
+  await connection(); 
   const params = await searchParams;
   const hoje = hojeEmSaoPaulo();
   const ano = lerNumero(params.ano, hoje.ano, 2000, 2100);
@@ -75,7 +75,7 @@ async function Calendario({
       : [];
 
   const municipios = await prisma.municipio.findMany({
-    where: { ativo: true },
+    where: { ativo: true, status: "APROVADO" },
     orderBy: { nome: "asc" },
   });
   const nomePorId = new Map(municipios.map((m) => [m.id, m.nome]));
@@ -90,7 +90,6 @@ async function Calendario({
   const porDia = new Map<string, FeriadoDoAno[]>();
   for (const f of doMes) porDia.set(f.data, [...(porDia.get(f.data) ?? []), f]);
 
-  // Cidades selecionadas sem nenhum feriado municipal cadastrado no ano
   const comMunicipal = new Set(
     feriadosAno.filter((f) => f.escopo === "MUNICIPAL").map((f) => f.municipioId),
   );
@@ -122,6 +121,7 @@ async function Calendario({
   return (
     <main className={styles.pagina}>
       <h1>Feriados municipais — SP</h1>
+      <p><Link href="/contribuir">Contribuir com um feriado</Link></p>
 
       <form method="get" className={styles.filtro}>
         <input type="hidden" name="ano" value={ano} />

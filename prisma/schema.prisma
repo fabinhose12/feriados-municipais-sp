@@ -1,3 +1,12 @@
+// Calendário de feriados municipais (SP) — Projeto de Extensão
+// Valores de texto (String) são validados na aplicação:
+//   escopo:   NACIONAL | ESTADUAL | MUNICIPAL
+//   tipo:     FERIADO | PONTO_FACULTATIVO
+//   tipoData: FIXA | MOVEL
+//   status:   APROVADO | PENDENTE | REJEITADO   (moderação)
+//   origem:   ADMIN | USUARIO
+//   fonte.tipo: LEI | SITE_PREFEITURA | DIARIO_OFICIAL | OUTRO
+
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -13,6 +22,7 @@ model Municipio {
   codigoIbge String?   @unique
   regiao     String    // ABC | GRANDE_SP | CAMPINAS | OUTRA
   ativo      Boolean   @default(true)
+  status     String    @default("APROVADO")
   feriados   Feriado[]
 }
 
@@ -28,6 +38,9 @@ model Feriado {
   vigenciaDe   Int?       // ano inicial (opcional)
   vigenciaAte  Int?       // ano final (opcional)
   verificado   Boolean    @default(false)
+  status       String     @default("APROVADO")
+  origem       String     @default("ADMIN")
+  observacao   String?
   municipioId  Int?       // vazio para NACIONAL/ESTADUAL
   municipio    Municipio? @relation(fields: [municipioId], references: [id])
   fontes       Fonte[]
@@ -35,6 +48,7 @@ model Feriado {
   atualizadoEm DateTime   @updatedAt
 
   @@index([municipioId, mes, dia])
+  @@index([status])
 }
 
 model Fonte {
