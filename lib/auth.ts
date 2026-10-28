@@ -5,10 +5,7 @@ import { prisma } from "./prisma";
 
 
 const id = process.env.GOOGLE_CLIENT_ID;
-console.log(
-  "[auth] GOOGLE_CLIENT_ID:",
-  id ? `${id.slice(0, 15)}… (${id.length} caracteres, termina certo: ${id.endsWith(".apps.googleusercontent.com")})` : "NÃO DEFINIDO",
-);
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "sqlite" }),
 

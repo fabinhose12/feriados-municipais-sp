@@ -1,14 +1,11 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { prisma } from "../../lib/prisma";
-import { usuarioAtual } from "../../lib/sessao";
 import { dataDoFeriado } from "../../lib/feriados";
 import { hojeEmSaoPaulo } from "../../lib/calendario";
 import { REGRAS_MOVEIS, TIPOS_FONTE } from "../../lib/validacao";
-import { BotaoGoogle } from "../botao-google";
+import { ProtegidoAdmin } from "./protegido";
 import { aprovar, bloquearAutor, desbloquearAutor, rejeitar } from "./actions";
-import "./admin.css";
 
 type DadosData = {
   tipoData: string;
@@ -59,33 +56,8 @@ function AcaoAutor({ autor }: { autor: Autor }) {
   );
 }
 
-async function Painel() {
+async function Pendencias() {
   await connection();
-
-  const usuario = await usuarioAtual();
-  if (!usuario) {
-    return (
-      <main className="cal-pagina">
-        <h1>Moderação</h1>
-        <p>Entre com uma conta de administrador para continuar.</p>
-        <BotaoGoogle destino="/admin" rotulo="Entrar com Google" />
-      </main>
-    );
-  }
-  if (usuario.role !== "ADMIN" || usuario.bloqueado) {
-    return (
-      <main className="cal-pagina">
-        <h1>Acesso restrito</h1>
-        <p>
-          A conta <strong>{usuario.email}</strong> não tem permissão de administrador.
-        </p>
-        <p>
-          <Link href="/">← Voltar ao calendário</Link>
-        </p>
-      </main>
-    );
-  }
-
   const ano = hojeEmSaoPaulo().ano;
 
   const pendentes = await prisma.feriado.findMany({
@@ -101,15 +73,10 @@ async function Painel() {
   });
 
   return (
-    <main className="cal-pagina">
-      <div className="adm-topo">
-        <h1>Moderação</h1>
-        <div className="adm-topo-links">
-          <Link href="/">Calendário</Link>
-        </div>
-      </div>
+    <>
+      <h1>Pendências</h1>
 
-      <h2>Pendentes ({pendentes.length})</h2>
+      <h2>Aguardando revisão ({pendentes.length})</h2>
       {pendentes.length === 0 && <p className="adm-vazio">Nenhuma contribuição aguardando revisão.</p>}
 
       {pendentes.map((f) => (
@@ -180,7 +147,7 @@ async function Painel() {
           </div>
         </section>
       ))}
-    </main>
+    </>
   );
 }
 
@@ -193,7 +160,9 @@ export default function Admin() {
         </main>
       }
     >
-      <Painel />
+      <ProtegidoAdmin>
+        <Pendencias />
+      </ProtegidoAdmin>
     </Suspense>
   );
 }
