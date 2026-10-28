@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { prisma } from "../../lib/prisma";
-import { estaLogado } from "../../lib/admin-sessao";
+import { usuarioAtual } from "../../lib/sessao";
 import { dataDoFeriado } from "../../lib/feriados";
 import { hojeEmSaoPaulo } from "../../lib/calendario";
 import { REGRAS_MOVEIS, TIPOS_FONTE } from "../../lib/validacao";
-import { aprovar, rejeitar, sair } from "./actions";
+import { BotaoGoogle } from "../botao-google";
+import { aprovar, bloquearAutor, desbloquearAutor, rejeitar } from "./actions";
 import "./admin.css";
 
 type DadosData = {
@@ -18,6 +18,8 @@ type DadosData = {
   vigenciaDe: number | null;
   vigenciaAte: number | null;
 };
+
+type Autor = { id: string; name: string; email: string; role: string; bloqueado: boolean } | null;
 
 function descreverData(f: DadosData, ano: number): string {
   const exemplo = dataDoFeriado(f, ano);
@@ -37,20 +39,63 @@ function descreverData(f: DadosData, ano: number): string {
 const dataHora = (d: Date) =>
   d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
 
+function BlocoAutor({ autor }: { autor: Autor }) {
+  if (!autor) return <div className="adm-meta">Autor: não identificado</div>;
+  return (
+    <div className="adm-meta">
+      Enviado por <strong>{autor.name}</strong> ({autor.email})
+      {autor.bloqueado && <span className="adm-badge">bloqueado</span>}
+    </div>
+  );
+}
+
+function AcaoAutor({ autor }: { autor: Autor }) {
+  if (!autor || autor.role === "ADMIN") return null;
+  return (
+    <form action={autor.bloqueado ? desbloquearAutor : bloquearAutor}>
+      <input type="hidden" name="autorId" value={autor.id} />
+      <button type="submit">{autor.bloqueado ? "Desbloquear autor" : "Bloquear autor"}</button>
+    </form>
+  );
+}
+
 async function Painel() {
   await connection();
-  if (!(await estaLogado())) redirect("/admin/login");
+
+  const usuario = await usuarioAtual();
+  if (!usuario) {
+    return (
+      <main className="cal-pagina">
+        <h1>Moderação</h1>
+        <p>Entre com uma conta de administrador para continuar.</p>
+        <BotaoGoogle destino="/admin" rotulo="Entrar com Google" />
+      </main>
+    );
+  }
+  if (usuario.role !== "ADMIN" || usuario.bloqueado) {
+    return (
+      <main className="cal-pagina">
+        <h1>Acesso restrito</h1>
+        <p>
+          A conta <strong>{usuario.email}</strong> não tem permissão de administrador.
+        </p>
+        <p>
+          <Link href="/">← Voltar ao calendário</Link>
+        </p>
+      </main>
+    );
+  }
 
   const ano = hojeEmSaoPaulo().ano;
 
   const pendentes = await prisma.feriado.findMany({
     where: { status: "PENDENTE" },
-    include: { municipio: true, fontes: true },
+    include: { municipio: true, fontes: true, autor: true },
     orderBy: { id: "asc" },
   });
   const recentes = await prisma.feriado.findMany({
     where: { status: "APROVADO", origem: "USUARIO" },
-    include: { municipio: true },
+    include: { municipio: true, autor: true },
     orderBy: { atualizadoEm: "desc" },
     take: 10,
   });
@@ -61,9 +106,6 @@ async function Painel() {
         <h1>Moderação</h1>
         <div className="adm-topo-links">
           <Link href="/">Calendário</Link>
-          <form action={sair}>
-            <button type="submit">Sair</button>
-          </form>
         </div>
       </div>
 
@@ -97,6 +139,7 @@ async function Painel() {
             </div>
           ))}
           {f.observacao && <div className="adm-meta">Obs.: {f.observacao}</div>}
+          <BlocoAutor autor={f.autor} />
           <div className="adm-meta">Enviado em {dataHora(f.criadoEm)}</div>
 
           <div className="adm-acoes">
@@ -112,6 +155,7 @@ async function Painel() {
                 Rejeitar
               </button>
             </form>
+            <AcaoAutor autor={f.autor} />
           </div>
         </section>
       ))}
@@ -124,6 +168,7 @@ async function Painel() {
             <strong>{f.municipio?.nome}</strong> — {f.nome}
           </div>
           <div className="adm-meta">{descreverData(f, ano)}</div>
+          <BlocoAutor autor={f.autor} />
           <div className="adm-acoes">
             <form action={rejeitar}>
               <input type="hidden" name="id" value={f.id} />
@@ -131,6 +176,7 @@ async function Painel() {
                 Remover do calendário
               </button>
             </form>
+            <AcaoAutor autor={f.autor} />
           </div>
         </section>
       ))}

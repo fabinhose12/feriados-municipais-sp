@@ -6,6 +6,7 @@
 //   status:   APROVADO | PENDENTE | REJEITADO   (moderação)
 //   origem:   ADMIN | USUARIO
 //   fonte.tipo: LEI | SITE_PREFEITURA | DIARIO_OFICIAL | OUTRO
+//   user.role: USER | ADMIN
 
 generator client {
   provider = "prisma-client"
@@ -43,12 +44,15 @@ model Feriado {
   observacao   String?
   municipioId  Int?       // vazio para NACIONAL/ESTADUAL
   municipio    Municipio? @relation(fields: [municipioId], references: [id])
+  autorId      String?    // quem enviou (vazio para dados do administrador)
+  autor        User?      @relation(fields: [autorId], references: [id], onDelete: SetNull)
   fontes       Fonte[]
   criadoEm     DateTime   @default(now())
   atualizadoEm DateTime   @updatedAt
 
   @@index([municipioId, mes, dia])
   @@index([status])
+  @@index([autorId])
 }
 
 model Fonte {
@@ -59,4 +63,65 @@ model Fonte {
   referencia   String?  // ex.: número da lei
   url          String?
   consultadoEm DateTime
+}
+
+// ---------- Contas (Better Auth) ----------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  role          String    @default("USER")
+  bloqueado     Boolean   @default(false)
+  sessions      Session[]
+  accounts      Account[]
+  feriados      Feriado[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
 }

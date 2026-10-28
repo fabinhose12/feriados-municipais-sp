@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BarraUsuario } from "./barra-usuario";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,10 +39,15 @@ export default function RootLayout({
               </svg>
               Feriados municipais SP
             </Link>
-            <nav className="site-nav">
-              <Link href="/">Calendário</Link>
-              <Link href="/contribuir">Contribuir</Link>
-            </nav>
+            <div className="site-direita">
+              <nav className="site-nav">
+                <Link href="/">Calendário</Link>
+                <Link href="/contribuir">Contribuir</Link>
+              </nav>
+              <Suspense fallback={null}>
+                <BarraUsuario />
+              </Suspense>
+            </div>
           </div>
         </header>
 

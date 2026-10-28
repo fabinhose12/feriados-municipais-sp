@@ -12,7 +12,7 @@
 .adm-badge { display: inline-block; font-size: 0.7rem; padding: 1px 8px; border-radius: 999px; background: var(--mun-bg); color: var(--mun-fg); margin-left: 0.5rem; }
 .adm-fonte { font-size: 0.9rem; }
 .adm-fonte a { color: var(--destaque); word-break: break-all; }
-.adm-acoes { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.adm-acoes { display: flex; gap: 0.5rem; margin-top: 0.4rem; flex-wrap: wrap; }
 .adm-acoes .adm-aprovar { background: #16a34a; color: #fff; border-color: #16a34a; }
 .adm-acoes .adm-rejeitar { border-color: #dc2626; color: #dc2626; }
 .adm-vazio { opacity: 0.8; }
