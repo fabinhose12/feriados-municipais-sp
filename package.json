@@ -2,12 +2,11 @@
   "name": "feriados-municipais-sp",
   "version": "0.1.0",
   "private": true,
-"scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && next build",
-  "start": "next start",
-  "lint": "eslint"
-},
+
+  "scripts": {
+    "postinstall": "prisma generate",
+    "build": "prisma generate && next build"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
