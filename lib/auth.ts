@@ -7,7 +7,7 @@ import { prisma } from "./prisma";
 const id = process.env.GOOGLE_CLIENT_ID;
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, { provider: "sqlite" }),
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
 
   socialProviders: {
     google: {
@@ -18,7 +18,6 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
-      // input: false => o usuário NÃO consegue definir esses campos por conta própria
       role: { type: "string", required: false, defaultValue: "USER", input: false },
       bloqueado: { type: "boolean", required: false, defaultValue: false, input: false },
     },

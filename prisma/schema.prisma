@@ -14,9 +14,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
-
 model Municipio {
   id         Int       @id @default(autoincrement())
   nome       String    @unique

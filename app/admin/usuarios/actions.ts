@@ -8,7 +8,6 @@ import { usuarioAtual } from "../../../lib/sessao";
 const voltar = (tipo: "ok" | "erro", msg: string) =>
   `/admin/usuarios?${tipo}=${encodeURIComponent(msg)}`;
 
-// Server Actions são endereços públicos: cada uma confere o papel de admin.
 async function exigirAdmin() {
   const u = await usuarioAtual();
   if (!u || u.role !== "ADMIN" || u.bloqueado) redirect("/admin");
