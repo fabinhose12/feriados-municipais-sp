@@ -64,20 +64,20 @@ async function Lista({ searchParams }: { searchParams: Promise<Params> }) {
               const ehAdm = u.role === "ADMIN";
               return (
                 <tr key={u.id}>
-                  <td>
+                  <td data-label="Conta">
                     <strong>{u.name}</strong>
                     {souEu && <span className="adm-badge">você</span>}
                     <div className="adm-meta">{u.email}</div>
                   </td>
-                  <td>
+                  <td data-label="Papel">
                     <span className={ehAdm ? "adm-papel adm-papel-admin" : "adm-papel"}>
                       {ehAdm ? "Administrador" : "Usuário"}
                     </span>
                   </td>
-                  <td>{u.bloqueado ? <span className="adm-badge">bloqueado</span> : "Ativo"}</td>
-                  <td>{u._count.feriados}</td>
-                  <td>{dataCurta(u.createdAt)}</td>
-                  <td>
+                  <td data-label="Situação">{u.bloqueado ? <span className="adm-badge">bloqueado</span> : "Ativo"}</td>
+                  <td data-label="Envios">{u._count.feriados}</td>
+                  <td data-label="Desde">{dataCurta(u.createdAt)}</td>
+                  <td data-label="Ações">
                     {souEu ? (
                       <span className="adm-meta">—</span>
                     ) : (

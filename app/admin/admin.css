@@ -39,3 +39,58 @@
 .adm-btn:hover { border-color: var(--brand); color: var(--brand); }
 .adm-btn-perigo { border-color: #dc2626; color: #dc2626; }
 .adm-btn-perigo:hover { border-color: #dc2626; color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+
+@media (max-width: 640px) {
+  .adm-nav { gap: 0.25rem; }
+  .adm-nav a { padding: 0.45rem 0.65rem; }
+  .adm-nav .adm-nav-sair { margin-left: 0; }
+
+  .adm-cartao { padding: 0.75rem; overflow-wrap: anywhere; }
+  .adm-fonte a { overflow-wrap: anywhere; }
+  .adm-acoes { gap: 0.4rem; }
+  .adm-acoes form { flex: 1 1 130px; }
+  .adm-acoes button { width: 100%; min-height: 42px; }
+
+  .adm-busca { flex-direction: column; }
+  .adm-busca input[type="text"] { width: 100%; min-width: 0; min-height: 44px; }
+  .adm-busca button { min-height: 44px; }
+
+  .adm-tabela-caixa { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .adm-tabela,
+  .adm-tabela tbody { display: block; width: 100%; }
+  .adm-tabela thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .adm-tabela tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem 0.8rem;
+    margin-bottom: 0.75rem;
+    padding: 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--raio);
+    background: var(--surface);
+    box-shadow: var(--sombra);
+  }
+  .adm-tabela td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .adm-tabela td::before {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--muted);
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .adm-tabela td:first-child,
+  .adm-tabela td:last-child,
+  .adm-tabela td[colspan] { grid-column: 1 / -1; }
+  .adm-celula-acoes { gap: 0.45rem; }
+  .adm-celula-acoes form { flex: 1 1 130px; }
+  .adm-btn { width: 100%; min-height: 42px; }
+}

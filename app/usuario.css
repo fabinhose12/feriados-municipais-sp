@@ -15,4 +15,6 @@
 @media (max-width: 640px) {
   .site-nome { display: none; }
   .site-nav a { padding: 0.4rem 0.55rem; }
+  .site-usuario { gap: 0.4rem; }
+  .btn-google, .btn-sair { min-height: 40px; padding-inline: 0.75rem; }
 }
